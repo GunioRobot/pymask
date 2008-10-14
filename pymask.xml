@@ -1,0 +1,17 @@
+<ui>
+	<menubar name="Menubar">
+		<menu action="File">
+			<menuitem action="New" />
+			<menuitem action="Open" />
+			<menuitem action="Save" />
+		</menu>
+		<menu action="Help">
+			<menuitem action="About" name="About..." />
+		</menu>
+	</menubar>
+	<toolbar name="Toolbar">
+		<toolitem action="New" />
+		<toolitem action="Open" />
+		<toolitem action="Save" />
+	</toolbar>
+</ui>
