@@ -4,6 +4,12 @@
 			<menuitem action="New" />
 			<menuitem action="Open" />
 			<menuitem action="Save" />
+			<separator />
+			<menuitem action="Quit" />
+		</menu>
+		<menu action="Tools">
+			<menuitem action="Mekoplus" name="Meko+" />
+			<menuitem action="Mekominus" name="Meko-" />
 		</menu>
 		<menu action="Help">
 			<menuitem action="About" name="About..." />

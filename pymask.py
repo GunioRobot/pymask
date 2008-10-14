@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
+# External imports
 import pygtk
-pygtk.require("2.0")
 import gtk
 import Image
 import sys
 import os
 
+# Internal imports
+import mekomask
+
+pygtk.require("2.0")
+
 class PyMask:
 	def __init__(self):
+		# Gtk Stuff
 		window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		window.connect("delete_event", self.delete_event)
 		window.connect("destroy", self.destroy)
@@ -23,11 +29,20 @@ class PyMask:
 			("New", gtk.STOCK_NEW, "_New"),
 			("Open", gtk.STOCK_OPEN, "_Open", None, None, self.open_cb),
 			("Save", gtk.STOCK_SAVE, "_Save"),
+			("Quit",  gtk.STOCK_QUIT, "_Quit", None, None, self.destroy),
+
+			("Tools", None, "_Tools"),
+			("Mekoplus", None, "Meko+", None, None, lambda a: self.mekomask_cb(True)),
+			("Mekominus", None, "Meko-", None, None, lambda a: self.mekomask_cb(False)),
+
 			("Help", None, "_Help"),
 			("About", None, "_About...")])
 
 		uimanager.insert_action_group(actiongroup, 0)
 		uimanager.add_ui_from_file("%s.xml" % os.path.splitext(sys.argv[0])[0])
+
+		accelgroup = uimanager.get_accel_group()
+		window.add_accel_group(accelgroup)
 		
 		menubar = uimanager.get_widget("/Menubar")
 		#toolbar = uimanager.get_widget("/Toolbar")
@@ -43,15 +58,15 @@ class PyMask:
 
 		window.show_all()
 
+		# Variables
+		self.drawable = None
+		self.image = None
+		self.mekomask = None
+
 	def open_cb(self, action):
 		chooser = gtk.FileChooserDialog("Open", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 		chooser.set_default_response(gtk.RESPONSE_OK)
 		
-		filter = gtk.FileFilter()
-		filter.set_name("All files")
-		filter.add_pattern("*")
-		chooser.add_filter(filter)
-
 		filter = gtk.FileFilter()
 		filter.set_name("Images")
 		filter.add_mime_type("image/png")
@@ -62,6 +77,11 @@ class PyMask:
 		filter.add_pattern("*.gif")
 		chooser.add_filter(filter)
 
+		filter = gtk.FileFilter()
+		filter.set_name("All files")
+		filter.add_pattern("*")
+		chooser.add_filter(filter)
+
 		response = chooser.run()
 
 		if response == gtk.RESPONSE_OK:
@@ -69,17 +89,27 @@ class PyMask:
 
 		chooser.destroy()
 
-	def draw_image(self, filename):
-		#image = Image.open(filename)
-		image = gtk.gdk.pixbuf_new_from_file(filename)
+	def mekomask_cb(self, plus):
+		if not self.mekomask:
+			self.mekomask = mekomask.Mekomask()
 
-		#self.drawable.draw_rgb_image(self.gc, 0, 0, image.size[0], image.size[1], gtk.gdk.RGB_DITHER_NONE, image.tostring())
-		self.drawable.draw_pixbuf(self.gc, image, 0, 0, 0, 0)
+		self.image = self.mekomask.mask_meko(self.image, plus)
+		rect = self.drawable.get_size()
+		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
+		self.drawable.invalidate_rect(rect, False)
+
+	def draw_image(self, filename):
+		self.image = gtk.gdk.pixbuf_new_from_file(filename)
+
+		self.drawable.draw_pixbuf(self.gc, self.image, 0, 0, 0, 0)
 
 	def area_expose(self, widget, event, data=None):
 		if not self.drawable:
 			self.drawable = self.area.window
 			self.gc = self.drawable.new_gc()
+
+		if self.image:
+			self.drawable.draw_pixbuf(self.gc, self.image, 0, 0, 0, 0)
 
 	def delete_event(self, widget, event, data=None):
 		return False
