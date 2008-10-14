@@ -26,7 +26,6 @@ class PyMask:
 
 		actiongroup = gtk.ActionGroup("PyMask")
 		actiongroup.add_actions([("File", None, "_File"),
-			("New", gtk.STOCK_NEW, "_New"),
 			("Open", gtk.STOCK_OPEN, "_Open", None, None, self.open_cb),
 			("Save", gtk.STOCK_SAVE, "_Save"),
 			("Quit",  gtk.STOCK_QUIT, "_Quit", None, None, self.destroy),

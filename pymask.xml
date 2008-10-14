@@ -1,7 +1,6 @@
 <ui>
 	<menubar name="Menubar">
 		<menu action="File">
-			<menuitem action="New" />
 			<menuitem action="Open" />
 			<menuitem action="Save" />
 			<separator />
