@@ -10,6 +10,7 @@ import os
 # Internal imports
 import mekomask
 import xormask
+import q0mask
 
 pygtk.require("2.0")
 
@@ -34,6 +35,7 @@ class PyMask:
 			("Tools", None, "_Tools"),
 			("Mekoplus", None, "Meko+", None, None, lambda a: self.mekomask_cb(True)),
 			("Mekominus", None, "Meko-", None, None, lambda a: self.mekomask_cb(False)),
+			("Q0mask", None, "Q0", None, None, self.q0mask_cb),
 			("Xormask", None, "XOR 0x80", None, None, self.xormask_cb),
 
 			("Help", None, "_Help"),
@@ -64,6 +66,7 @@ class PyMask:
 		self.image = None
 		self.mekomask = None
 		self.xormask = None
+		self.q0mask = None
 
 	def open_cb(self, action):
 		chooser = gtk.FileChooserDialog("Open", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
@@ -101,6 +104,15 @@ class PyMask:
 			self.image.save(chooser.get_filename(), "png")
 
 		chooser.destroy()
+
+	def q0mask_cb(self, action):
+		if not self.q0mask:
+			self.q0mask = q0mask.Q0mask()
+
+		self.image = self.q0mask.mask_q0(self.image)
+		rect = self.drawable.get_size()
+		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
+		self.drawable.invalidate_rect(rect, False)
 
 	def xormask_cb(self, action):
 		if not self.xormask:

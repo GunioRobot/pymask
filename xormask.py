@@ -14,10 +14,8 @@ class Xormask:
 
 		for y in xrange(h):
 			for x in xrange(w):
-				#pixel = temp.getpixel(((px + q0_cell_size - xx - 1), (py + q0_cell_size - yy - 1)))
 				pixel = temp.getpixel((x, y))
 				pixel = ((255 - pixel[0]) ^ 0x80, (255 - pixel[1]) ^ 0x80, (255 - pixel[2]) ^ 0x80)
-				#im.putpixel(((px + q0_cell_size - xx - 1), (py + q0_cell_size - yy - 1)), pixel)
 				im.putpixel((x, y), pixel)
 
 		return gtk.gdk.pixbuf_new_from_data(im.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, w, h, 3 * w)
