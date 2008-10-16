@@ -10,6 +10,7 @@
 			<menuitem action="Mekoplus" name="Meko+" />
 			<menuitem action="Mekominus" name="Meko-" />
 			<menuitem action="Q0mask" name="Q0" />
+			<menuitem action="Flmask" name="FL" />
 			<menuitem action="Xormask" name="XOR 0x80" />
 		</menu>
 		<menu action="Help">

@@ -11,6 +11,7 @@ import os
 import mekomask
 import xormask
 import q0mask
+import flmask
 
 pygtk.require("2.0")
 
@@ -36,6 +37,7 @@ class PyMask:
 			("Mekoplus", None, "Meko+", None, None, lambda a: self.mekomask_cb(True)),
 			("Mekominus", None, "Meko-", None, None, lambda a: self.mekomask_cb(False)),
 			("Q0mask", None, "Q0", None, None, self.q0mask_cb),
+			("Flmask", None, "FL", None, None, self.flmask_cb),
 			("Xormask", None, "XOR 0x80", None, None, self.xormask_cb),
 
 			("Help", None, "_Help"),
@@ -67,6 +69,7 @@ class PyMask:
 		self.mekomask = None
 		self.xormask = None
 		self.q0mask = None
+		self.flmask = None
 
 	def open_cb(self, action):
 		chooser = gtk.FileChooserDialog("Open", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
@@ -105,32 +108,38 @@ class PyMask:
 
 		chooser.destroy()
 
+	def invalidate(self):
+		rect = self.drawable.get_size()
+		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
+		self.drawable.invalidate_rect(rect, False)
+
+	def flmask_cb(self, action):
+		if not self.flmask:
+			self.flmask = flmask.Flmask()
+
+		self.image = self.flmask.mask_fl(self.image)
+		self.invalidate()
+
 	def q0mask_cb(self, action):
 		if not self.q0mask:
 			self.q0mask = q0mask.Q0mask()
 
 		self.image = self.q0mask.mask_q0(self.image)
-		rect = self.drawable.get_size()
-		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
-		self.drawable.invalidate_rect(rect, False)
+		self.invalidate()
 
 	def xormask_cb(self, action):
 		if not self.xormask:
 			self.xormask = xormask.Xormask()
 
 		self.image = self.xormask.mask_xor(self.image)
-		rect = self.drawable.get_size()
-		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
-		self.drawable.invalidate_rect(rect, False)
+		self.invalidate()
 
 	def mekomask_cb(self, plus):
 		if not self.mekomask:
 			self.mekomask = mekomask.Mekomask()
 
 		self.image = self.mekomask.mask_meko(self.image, plus)
-		rect = self.drawable.get_size()
-		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
-		self.drawable.invalidate_rect(rect, False)
+		self.invalidate()
 
 	def draw_image(self, filename):
 		self.image = gtk.gdk.pixbuf_new_from_file(filename)
