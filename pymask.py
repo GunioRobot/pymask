@@ -9,6 +9,7 @@ import os
 
 # Internal imports
 import mekomask
+import xormask
 
 pygtk.require("2.0")
 
@@ -27,12 +28,13 @@ class PyMask:
 		actiongroup = gtk.ActionGroup("PyMask")
 		actiongroup.add_actions([("File", None, "_File"),
 			("Open", gtk.STOCK_OPEN, "_Open", None, None, self.open_cb),
-			("Save", gtk.STOCK_SAVE, "_Save"),
+			("Save", gtk.STOCK_SAVE, "_Save", None, None, self.save_cb),
 			("Quit",  gtk.STOCK_QUIT, "_Quit", None, None, self.destroy),
 
 			("Tools", None, "_Tools"),
 			("Mekoplus", None, "Meko+", None, None, lambda a: self.mekomask_cb(True)),
 			("Mekominus", None, "Meko-", None, None, lambda a: self.mekomask_cb(False)),
+			("Xormask", None, "XOR 0x80", None, None, self.xormask_cb),
 
 			("Help", None, "_Help"),
 			("About", None, "_About...")])
@@ -61,6 +63,7 @@ class PyMask:
 		self.drawable = None
 		self.image = None
 		self.mekomask = None
+		self.xormask = None
 
 	def open_cb(self, action):
 		chooser = gtk.FileChooserDialog("Open", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
@@ -87,6 +90,26 @@ class PyMask:
 			self.draw_image(chooser.get_filename())
 
 		chooser.destroy()
+
+	def save_cb(self, action):
+		chooser = gtk.FileChooserDialog("Save", None, gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+		chooser.set_default_response(gtk.RESPONSE_OK)
+
+		response = chooser.run()
+
+		if response == gtk.RESPONSE_OK:
+			self.image.save(chooser.get_filename(), "png")
+
+		chooser.destroy()
+
+	def xormask_cb(self, action):
+		if not self.xormask:
+			self.xormask = xormask.Xormask()
+
+		self.image = self.xormask.mask_xor(self.image)
+		rect = self.drawable.get_size()
+		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
+		self.drawable.invalidate_rect(rect, False)
 
 	def mekomask_cb(self, plus):
 		if not self.mekomask:

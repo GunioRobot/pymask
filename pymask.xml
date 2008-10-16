@@ -9,13 +9,13 @@
 		<menu action="Tools">
 			<menuitem action="Mekoplus" name="Meko+" />
 			<menuitem action="Mekominus" name="Meko-" />
+			<menuitem action="Xormask" name="XOR 0x80" />
 		</menu>
 		<menu action="Help">
 			<menuitem action="About" name="About..." />
 		</menu>
 	</menubar>
 	<toolbar name="Toolbar">
-		<toolitem action="New" />
 		<toolitem action="Open" />
 		<toolitem action="Save" />
 	</toolbar>
