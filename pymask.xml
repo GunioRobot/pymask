@@ -11,6 +11,7 @@
 			<menuitem action="Mekominus" name="Meko-" />
 			<menuitem action="Q0mask" name="Q0" />
 			<menuitem action="Flmask" name="FL" />
+			<menuitem action="Winmask" name="WIN" />
 			<menuitem action="Xormask" name="XOR 0x80" />
 			<menuitem action="Negmask" name="Invert" />
 		</menu>

@@ -13,6 +13,7 @@ import mekomask
 import xormask
 import q0mask
 import flmask
+import winmask
 
 pygtk.require("2.0")
 
@@ -39,6 +40,7 @@ class PyMask:
 			("Mekominus", None, "Meko-", None, None, lambda a: self.mekomask_cb(False)),
 			("Q0mask", None, "Q0", None, None, self.q0mask_cb),
 			("Flmask", None, "FL", None, None, self.flmask_cb),
+			("Winmask", None, "WIN", None, None, self.winmask_cb),
 			("Xormask", None, "XOR 0x80", None, None, self.xormask_cb),
 			("Negmask", None, "Invert", None, None, self.neg_cb),
 
@@ -81,6 +83,7 @@ class PyMask:
 		self.xormask = None
 		self.q0mask = None
 		self.flmask = None
+		self.winmask = None
 		self.selection = None
 		self.marchstate = 0
 
@@ -207,6 +210,14 @@ class PyMask:
 		rect = self.drawable.get_size()
 		rect = gtk.gdk.Rectangle(0, 0, rect[0], rect[1])
 		self.drawable.invalidate_rect(rect, False)
+
+	def winmask_cb(self, action):
+		if not self.winmask:
+			self.winmask = winmask.Winmask()
+
+		if self.selection is not None and self.selection[4] is False:
+			self.image = self.winmask.mask_win(self.image, self.selection)
+			self.invalidate()
 
 	def flmask_cb(self, action):
 		if not self.flmask:
