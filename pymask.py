@@ -2,6 +2,7 @@
 
 # External imports
 import pygtk
+pygtk.require("2.0")
 import gtk
 import Image
 import sys
@@ -12,8 +13,6 @@ import mekomask
 import xormask
 import q0mask
 import flmask
-
-pygtk.require("2.0")
 
 class PyMask:
 	def __init__(self):
