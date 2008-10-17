@@ -847,12 +847,15 @@ class Mekomask:
   0x04f6,0x09bc,0x1704,0x1def,0x1faf,0x22d5,0x1a34,0x21c0,0x099d,0x1bd7,0x1c47,
   0x1a4b,0x195e,0x0569,0x10e5,0x0bae,0x01a4,0x220c,0x0bb9,0x1700]
 
-	def mask_meko(self, pixbuf, plus):
+	def mask_meko(self, pixbuf, plus, selection):
 		meko_cell_size = 16
-		w = pixbuf.get_width()
-		h = pixbuf.get_height()
+		w = selection[2]
+		h = selection[3]
+		ow = pixbuf.get_width()
+		oh = pixbuf.get_height()
 		im = Image.new("RGB", (w, h))
-		temp = Image.fromstring("RGB", (w, h), pixbuf.get_pixels())
+		fullimage = Image.fromstring("RGB", (ow, oh), pixbuf.get_pixels())
+		temp = fullimage.crop((selection[0], selection [1], selection[0] + w, selection[1] + h))
 
     		cell_width = w / meko_cell_size
     		cell_height = h / meko_cell_size
@@ -880,7 +883,9 @@ class Mekomask:
 					    
 		im = ImageOps.invert(im)
 
-		return gtk.gdk.pixbuf_new_from_data(im.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, w, h, 3 * w)
+		fullimage.paste(im, (selection[0], selection[1]))
+
+		return gtk.gdk.pixbuf_new_from_data(fullimage.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, ow, oh, 3 * ow)
 
 	def meko_compare(self, x, y):
 	    return x["key"] - y["key"]

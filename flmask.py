@@ -6,12 +6,15 @@ pygtk.require("2.0")
 import gtk
 
 class Flmask:
-	def mask_fl(self, pixbuf):
+	def mask_fl(self, pixbuf, selection):
 		fl_cell_size = 8
-		w = pixbuf.get_width()
-		h = pixbuf.get_height()
+		w = selection[2]
+		h = selection[3]
+		ow = pixbuf.get_width()
+		oh = pixbuf.get_height()
 		im = Image.new("RGB", (w, h))
-		temp = Image.fromstring("RGB", (w, h), pixbuf.get_pixels())
+		fullimage = Image.fromstring("RGB", (ow, oh), pixbuf.get_pixels())
+		temp = fullimage.crop((selection[0], selection[1], selection[0] + w, selection[1] + h))
 
 		cell_width = w / fl_cell_size
 		cell_height = h / fl_cell_size
@@ -36,7 +39,9 @@ class Flmask:
 
 						im.putpixel(((dst_x + xx), (dst_y + yy)), pixel)
 
-		return gtk.gdk.pixbuf_new_from_data(im.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3)
+		fullimage.paste(im, (selection[0], selection[1]))
+
+		return gtk.gdk.pixbuf_new_from_data(fullimage.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, ow, oh, ow * 3)
 
 	def fl_init(self, width, height):
 		self.fl_table = []

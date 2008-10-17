@@ -4,6 +4,7 @@
 import pygtk
 import gtk
 import Image
+import ImageOps
 import sys
 import os
 
@@ -39,6 +40,7 @@ class PyMask:
 			("Q0mask", None, "Q0", None, None, self.q0mask_cb),
 			("Flmask", None, "FL", None, None, self.flmask_cb),
 			("Xormask", None, "XOR 0x80", None, None, self.xormask_cb),
+			("Negmask", None, "Invert", None, None, self.neg_cb),
 
 			("Help", None, "_Help"),
 			("About", None, "_About...")])
@@ -57,7 +59,16 @@ class PyMask:
 
 		self.area = gtk.DrawingArea()
 		self.area.set_size_request(400, 300)
-		self.area.connect("expose-event", self.area_expose)
+		self.area.connect("expose_event", self.area_expose)
+		self.area.connect("motion_notify_event", self.area_motion)
+		self.area.connect("button_press_event", self.area_button)
+		self.area.connect("button_release_event", self.area_button)
+		self.area.set_events(gtk.gdk.EXPOSURE_MASK
+				   | gtk.gdk.LEAVE_NOTIFY_MASK
+				   | gtk.gdk.BUTTON_PRESS_MASK
+				   | gtk.gdk.BUTTON_RELEASE_MASK
+				   | gtk.gdk.POINTER_MOTION_MASK
+				   | gtk.gdk.POINTER_MOTION_HINT_MASK)
 
 		vbox.pack_start(self.area, padding=10)
 
@@ -70,6 +81,90 @@ class PyMask:
 		self.xormask = None
 		self.q0mask = None
 		self.flmask = None
+		self.selection = None
+		self.marchstate = 0
+
+	def area_motion(self, widget, event):
+		if event.is_hint:
+			x, y, state = event.window.get_pointer()
+		else:
+			x = event.x
+			y = event.y
+			state = event.state
+
+		if self.selection and self.selection[4] is True:
+			x = int(x) / 8 * 8
+			y = int(y) / 8 * 8
+
+			self.oldselection[2] = self.selection[2]
+			self.oldselection[3] = self.selection[3]
+
+			self.selection[2] = x - self.selection[0]
+			self.selection[3] = y - self.selection[1]
+			self.draw_selection()
+			
+		return True
+
+	def area_button(self, widget, event):
+		if self.image:
+			if event.type == gtk.gdk.BUTTON_PRESS and event.button == 1:
+				self.invalidate()
+				self.selection = [int(event.x) / 8 * 8, int(event.y) / 8 * 8, 0, 0, True]
+				self.oldselection = [self.selection[0], self.selection[1], 0, 0]
+			elif event.type == gtk.gdk.BUTTON_RELEASE:
+				self.selection[4] = False
+				self.marchstate = 2
+				self.draw_selection()
+				if 0 in self.selection[2:3]:
+					self.selection = None
+
+		return True
+
+	def draw_selection(self):
+		if not self.selection:
+			return
+		self.gc.set_function(gtk.gdk.INVERT)
+
+		if self.selection[4] is False:
+			sellist = [self.selection]
+			self.gc.set_line_attributes(1, gtk.gdk.LINE_ON_OFF_DASH, gtk.gdk.CAP_BUTT, gtk.gdk.JOIN_MITER)
+			self.marchstate ^= 1
+		else:
+			sellist = [self.oldselection, self.selection]
+
+		for selection in sellist:
+			if selection[2] > 0 and selection[3] > 0:
+				x = selection[0]
+				y = selection[1]
+				w = selection[2]
+				h = selection[3]
+			elif selection[2] < 0 and selection[3] > 0:
+				x = selection[0] + selection[2]
+				y = selection[1]
+				w = abs(selection[2])
+				h = selection[3]
+			elif selection[2] > 0 and selection[3] < 0:
+				x = selection[0]
+				y = selection[1] + selection[3]
+				w = selection[2]
+				h = abs(selection[3])
+			elif selection[2] < 0 and selection[3] < 0:
+				x = selection[0] + selection[2]
+				y = selection[1] + selection[3]
+				w = abs(selection[2])
+				h = abs(selection[3])
+			else:
+				continue
+
+			if self.selection[4] is False:
+				self.selection[0] = x
+				self.selection[1] = y
+				self.selection[2] = w
+				self.selection[3] = h
+
+			self.drawable.draw_rectangle(self.gc, False, x, y, w, h)
+		self.gc.set_line_attributes(1, gtk.gdk.LINE_SOLID, gtk.gdk.CAP_BUTT, gtk.gdk.JOIN_MITER)
+		self.gc.set_function(gtk.gdk.COPY)
 
 	def open_cb(self, action):
 		chooser = gtk.FileChooserDialog("Open", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
@@ -117,29 +212,49 @@ class PyMask:
 		if not self.flmask:
 			self.flmask = flmask.Flmask()
 
-		self.image = self.flmask.mask_fl(self.image)
-		self.invalidate()
+		if self.selection is not None and self.selection[4] is False:
+			self.image = self.flmask.mask_fl(self.image, self.selection)
+			self.invalidate()
 
 	def q0mask_cb(self, action):
 		if not self.q0mask:
 			self.q0mask = q0mask.Q0mask()
 
-		self.image = self.q0mask.mask_q0(self.image)
-		self.invalidate()
+		if self.selection is not None and self.selection[4] is False:
+			self.image = self.q0mask.mask_q0(self.image, self.selection)
+			self.invalidate()
 
 	def xormask_cb(self, action):
 		if not self.xormask:
 			self.xormask = xormask.Xormask()
 
-		self.image = self.xormask.mask_xor(self.image)
-		self.invalidate()
+		if self.selection is not None and self.selection[4] is False:
+			self.image = self.xormask.mask_xor(self.image, self.selection)
+			self.invalidate()
 
 	def mekomask_cb(self, plus):
 		if not self.mekomask:
 			self.mekomask = mekomask.Mekomask()
 
-		self.image = self.mekomask.mask_meko(self.image, plus)
-		self.invalidate()
+		if self.selection is not None and self.selection[4] is False:
+			self.image = self.mekomask.mask_meko(self.image, plus, self.selection)
+			self.invalidate()
+
+	def neg_cb(self, action):
+		if self.selection is not None and self.selection[4] is False:
+			w = self.selection[2]
+			h = self.selection[3]
+			ow = self.image.get_width()
+			oh = self.image.get_height()
+			im = Image.new("RGB", (w, h))
+			fullimage = Image.fromstring("RGB", (ow, oh), self.image.get_pixels())
+			temp = fullimage.crop((self.selection[0], self.selection[1], self.selection[0] + w, self.selection[1] + h))
+
+			im = ImageOps.invert(temp)
+			fullimage.paste(im, (self.selection[0], self.selection[1]))
+
+			self.image = gtk.gdk.pixbuf_new_from_data(fullimage.tostring(), gtk.gdk.COLORSPACE_RGB, False, 8, ow, oh, ow * 3)
+			self.invalidate()
 
 	def draw_image(self, filename):
 		self.image = gtk.gdk.pixbuf_new_from_file(filename)
@@ -153,6 +268,7 @@ class PyMask:
 
 		if self.image:
 			self.drawable.draw_pixbuf(self.gc, self.image, 0, 0, 0, 0)
+			self.draw_selection()
 
 	def delete_event(self, widget, event, data=None):
 		return False
