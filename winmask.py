@@ -8,8 +8,10 @@ import gtk
 class Winmask:
 	def mask_win(self, pixbuf, selection):
 		win_cell_size = 16
-		w = selection[2]
-		h = selection[3]
+		if selection[2] % win_cell_size:
+			w = selection[2] - 8
+		if selection[3] % win_cel_size:
+			h = selection[3] - 8
 		ow = pixbuf.get_width()
 		oh = pixbuf.get_height()
 		im = Image.new("RGB", (w, h))
