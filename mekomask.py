@@ -849,10 +849,12 @@ class Mekomask:
 
 	def mask_meko(self, pixbuf, plus, selection):
 		meko_cell_size = 16
+		w = selection[2]
+		h = selection[3]
 		if selection[2] % meko_cell_size:
-			w = selection[2] - 8
+			w -= 8
 		if selection[3] % meko_cell_size:
-			h = selection[3] - 8
+			h -= 8
 		ow = pixbuf.get_width()
 		oh = pixbuf.get_height()
 		im = Image.new("RGB", (w, h))
