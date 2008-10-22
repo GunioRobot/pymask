@@ -22,6 +22,7 @@ class PyMask:
 		window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		window.connect("delete_event", self.delete_event)
 		window.connect("destroy", self.destroy)
+		window.set_size_request(400, 300)
 
 		vbox = gtk.VBox()
 		window.add(vbox)
@@ -58,8 +59,13 @@ class PyMask:
 		vbox.pack_start(menubar, False)
 		#vbox.pack_start(toolbar, False)
 
+		scrolled_window = gtk.ScrolledWindow()
+		scrolled_window.set_border_width(10)
+		scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		vbox.pack_start(scrolled_window, True, True, 0)
+
 		self.area = gtk.DrawingArea()
-		self.area.set_size_request(400, 300)
+		self.area.set_size_request(0, 0)
 		self.area.connect("expose_event", self.area_expose)
 		self.area.connect("motion_notify_event", self.area_motion)
 		self.area.connect("button_press_event", self.area_button)
@@ -71,7 +77,7 @@ class PyMask:
 				   | gtk.gdk.POINTER_MOTION_MASK
 				   | gtk.gdk.POINTER_MOTION_HINT_MASK)
 
-		vbox.pack_start(self.area, padding=10)
+		scrolled_window.add_with_viewport(self.area)
 
 		window.show_all()
 
@@ -268,6 +274,7 @@ class PyMask:
 
 	def draw_image(self, filename):
 		self.image = gtk.gdk.pixbuf_new_from_file(filename)
+		self.area.set_size_request(self.image.get_width(), self.image.get_height())
 
 		self.drawable.draw_pixbuf(self.gc, self.image, 0, 0, 0, 0)
 
